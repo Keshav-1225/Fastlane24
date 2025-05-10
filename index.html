@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastLane24 - Mobile Booking</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #e6f0fa;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header,
+    footer {
+      background-color: #0a3d62;
+      color: white;
+      padding: 10px;
+    }
+
+    header {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+
+    header .logo {
+      height: 40px;
+      background-color: white;
+      width: 40px;
+      border-radius: 50%;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      flex: 1;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0a3d62;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #0a3d62;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    label {
+      margin-top: 10px;
+      display: block;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 2px solid #0a3d62;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      text-align: center;
+    }
+
+    .services button {
+      width: 48%;
+      margin: 5px 1%;
+    }
+
+    .services button.selected {
+      background-color: #4da8da;
+      font-weight: bold;
+    }
+
+    .vehicle-type {
+      margin-top: 10px;
+    }
+
+    .vehicle-options {
+      display: none;
+    }
+
+    .vehicle-options.active {
+      display: block;
+    }
+
+    footer {
+      font-size: 0.9em;
+      text-align: center;
+      background-color: #0a3d62;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <header id="header">
+    <div class="logo"></div>
+    <strong>FastLane24</strong>
+    <div class="info">
+      <span id="membershipStatus" class="membership-status"></span>
+      <span id="userGreeting"></span>
+    </div>
+  </header>
+  <div class="container">
+    <div id="login">
+      <h2>Login to FastLane24</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="authenticate()">Login</button>
+      <div id="loginError" class="error hidden">Invalid credentials. Try again.</div>
+    </div>
+    <div id="booking" class="hidden">
+      <h2>Book Your Car Pickup</h2>
+      <label for="vehicle">Registered Vehicle</label>
+      <input type="text" id="vehicle" placeholder="e.g. Maruti Swift 2018" />
+
+      <label for="pickup">Desired Pickup Time</label>
+      <input type="datetime-local" id="pickup" />
+
+      <label for="vehicleType">Vehicle Type</label>
+      <select id="vehicleType" onchange="updateServiceOptions()">
+        <option value="">Select</option>
+        <option value="two">Two Wheeler</option>
+        <option value="four">Four Wheeler</option>
+      </select>
+
+      <div id="twoWheelerOptions" class="vehicle-options">
+        <label>Choose Service (Two Wheeler)</label>
+        <div class="services">
+          <button onclick="toggleService(this, 'Basic', 499)">Basic</button>
+          <button onclick="toggleService(this, 'Intermediate', 699)">Intermediate</button>
+          <button onclick="toggleService(this, 'Full', 999)">Full</button>
+        </div>
+      </div>
+
+      <div id="fourWheelerOptions" class="vehicle-options">
+        <label>Choose Service (Four Wheeler)</label>
+        <div class="services">
+          <button onclick="toggleService(this, 'Basic', 2299)">Basic</button>
+          <button onclick="toggleService(this, 'Intermediate', 3799)">Intermediate</button>
+          <button onclick="toggleService(this, 'Full', 5299)">Full</button>
+        </div>
+      </div>
+
+      <button onclick="goToBilling()">Continue</button>
+      <div id="bookingError" class="error hidden">Please fill in all required fields.</div>
+    </div>
+    <div id="billing" class="hidden">
+      <h2>Billing Summary</h2>
+      <p><strong>Vehicle:</strong> <span id="summaryVehicle"></span></p>
+      <p><strong>Pickup Time:</strong> <span id="summaryPickup"></span></p>
+      <p><strong>Services:</strong> <span id="summaryService"></span></p>
+      <p><strong>Base Charges:</strong> ₹<span id="summaryCharges"></span></p>
+      <p><strong>GST (18%):</strong> ₹<span id="summaryGST"></span></p>
+      <p><strong>Total:</strong> ₹<span id="summaryTotal"></span></p>
+
+      <button onclick="submitBooking()">Confirm Booking</button>
+
+      <label for="rating">Rate Our Service</label>
+      <input type="range" id="rating" name="rating" min="1" max="5" step="1" />
+
+      <label for="feedback">Feedback</label>
+      <textarea id="feedback" rows="4" placeholder="Leave a comment..."></textarea>
+    </div>
+    <div id="popup" class="popup hidden">
+      <img src="https://cdn3.iconfinder.com/data/icons/basic-ui-203/128/tick-512.png" style="width: 50px;">
+      <h3>Booking Confirmed!</h3>
+      <p>Your service request has been received.</p>
+      <button onclick="goHome()">Home</button>
+    </div>
+  </div>
+  <footer>
+    <div id="footerUser"></div>
+    <p>Email: support@FastLane24.in</p>
+    <div>FastLane24</div>
+    <p>Customer Care: +91-99999-88888</p>
+    <div class="logo"></div>
+  </footer>
+  <script>
+    const selectedServices = [];
+
+    function authenticate() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const errorMsg = document.getElementById("loginError");
+
+      if (user === "Gahena" && pass === "Tejwani") {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("booking").classList.remove("hidden");
+        document.getElementById("header").style.display = "flex";
+        document.getElementById("userGreeting").textContent = "Welcome, " + user;
+        document.getElementById("membershipStatus").textContent = "Pro";
+        document.getElementById("membershipStatus").style.color = "gold";
+        errorMsg.classList.add("hidden");
+      } else {
+        errorMsg.classList.remove("hidden");
+      }
+    }
+
+    function toggleService(button, service, price) {
+      if (button.classList.contains('selected')) {
+        button.classList.remove('selected');
+        const index = selectedServices.findIndex(s => s.name === service);
+        if (index !== -1) selectedServices.splice(index, 1);
+      } else {
+        button.classList.add('selected');
+        selectedServices.push({ name: service, price: price });
+      }
+    }
+
+    function updateServiceOptions() {
+      const type = document.getElementById("vehicleType").value;
+      document.getElementById("twoWheelerOptions").classList.remove("active");
+      document.getElementById("fourWheelerOptions").classList.remove("active");
+      if (type === "two") {
+        document.getElementById("twoWheelerOptions").classList.add("active");
+      } else if (type === "four") {
+        document.getElementById("fourWheelerOptions").classList.add("active");
+      }
+    }
+
+    function goToBilling() {
+      const vehicle = document.getElementById("vehicle").value;
+      const pickup = document.getElementById("pickup").value;
+      const errorMsg = document.getElementById("bookingError");
+
+      if (vehicle && pickup && selectedServices.length > 0) {
+        const serviceNames = selectedServices.map(s => s.name).join(", ");
+        const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+        const gst = totalPrice * 0.18;
+        const total = totalPrice + gst;
+
+        document.getElementById("booking").classList.add("hidden");
+        document.getElementById("billing").classList.remove("hidden");
+        document.getElementById("summaryVehicle").textContent = vehicle;
+        document.getElementById("summaryPickup").textContent = pickup;
+        document.getElementById("summaryService").textContent = serviceNames;
+        document.getElementById("summaryCharges").textContent = totalPrice.toFixed(2);
+        document.getElementById("summaryGST").textContent = gst.toFixed(2);
+        document.getElementById("summaryTotal").textContent = total.toFixed(2);
+        errorMsg.classList.add("hidden");
+      } else {
+        errorMsg.classList.remove("hidden");
+      }
+    }
+
+    function submitBooking() {
+      document.getElementById("popup").classList.remove("hidden");
+    }
+
+    function goHome() {
+      document.getElementById("popup").classList.add("hidden");
+      document.getElementById("billing").classList.add("hidden");
+      document.getElementById("booking").classList.remove("hidden");
+    }
+  </script>
+</body>
+
+</html>
