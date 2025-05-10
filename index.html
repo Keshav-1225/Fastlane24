@@ -199,7 +199,7 @@
       <p><strong>Pickup Time:</strong> <span id="summaryPickup"></span></p>
       <p><strong>Services:</strong> <span id="summaryService"></span></p>
       <p><strong>Base Charges:</strong> ₹<span id="summaryCharges"></span></p>
-      <p><strong>GST (18%):</strong> ₹<span id="summaryGST"></span></p>
+      <p><strong>GST (12%):</strong> ₹<span id="summaryGST"></span></p>
       <p><strong>Total:</strong> ₹<span id="summaryTotal"></span></p>
 
       <button onclick="submitBooking()">Confirm Booking</button>
@@ -275,7 +275,7 @@
       if (vehicle && pickup && selectedServices.length > 0) {
         const serviceNames = selectedServices.map(s => s.name).join(", ");
         const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-        const gst = totalPrice * 0.18;
+        const gst = totalPrice * 0.12;
         const total = totalPrice + gst;
 
         document.getElementById("booking").classList.add("hidden");
